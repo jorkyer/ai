@@ -440,6 +440,29 @@ test('сохранение программы в библиотеку', () => {
   sandbox.prompt = () => null;
 });
 
+test('экспорт в APK идёт через нативный мост Android.saveText', () => {
+  const saved = [];
+  sandbox.Android = { saveText: (name, text) => { saved.push([name, text]); return '/sdcard/' + name; }, version: () => '1.0' };
+  calc.setProgram([{ lit: 7 }, { stop: true }]);
+  documentShim.getElementById('btn-export').click();
+  assert.strictEqual(saved.length, 1, 'мост не вызван');
+  assert.strictEqual(saved[0][0], 'progcalc-program.json');
+  const payload = JSON.parse(saved[0][1]);
+  assert.strictEqual(payload.program.length, 2);
+  assert.strictEqual(payload.version, 1);
+  assert.ok(documentShim.getElementById('example-info').textContent.indexOf('/sdcard/') >= 0,
+    'путь к файлу не показан пользователю');
+  delete sandbox.Android;
+});
+
+test('экспорт в браузере по-прежнему использует blob', () => {
+  let blobCalls = 0;
+  sandbox.Blob = function () { blobCalls++; };
+  calc.setProgram([{ lit: 1 }, { stop: true }]);
+  documentShim.getElementById('btn-export').click();
+  assert.strictEqual(blobCalls, 1);
+});
+
 test('загрузка программы из библиотеки', () => {
   calc.clearProgram();
   const sel = documentShim.getElementById('program-library');

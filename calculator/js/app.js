@@ -428,6 +428,18 @@
 
   function exportProgram() {
     var data = JSON.stringify(calc.serialize(), null, 2);
+
+    // В APK скачивание blob-ссылок не работает — сохраняем через нативный мост
+    // (см. MainActivity.AndroidBridge.saveText). В браузере — обычная загрузка.
+    if (window.Android && typeof window.Android.saveText === 'function') {
+      var path = window.Android.saveText('progcalc-program.json', data);
+      var info = $('#example-info');
+      if (info) {
+        info.textContent = path ? 'Файл сохранён: ' + path : 'Не удалось сохранить файл';
+      }
+      return;
+    }
+
     var blob = new Blob([data], { type: 'application/json' });
     var a = el('a');
     a.href = URL.createObjectURL(blob);

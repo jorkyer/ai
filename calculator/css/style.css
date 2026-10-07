@@ -445,3 +445,40 @@ html, body {
 ::-webkit-scrollbar-track { background: #0d1119; }
 ::-webkit-scrollbar-thumb { background: #2c3548; border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #3b4763; }
+
+/* ------------------------------ телефон (APK / узкий экран) ------------------------------ */
+@media (max-width: 700px) {
+  .topbar { padding: 10px 12px; gap: 8px; }
+  .topbar h1 { font-size: 14px; }
+  .layout { grid-template-columns: 1fr; padding: 10px 10px 4px; gap: 10px; }
+  .panel { padding: 10px; border-radius: 8px; }
+
+  .display { font-size: 34px; }
+  .keypad { gap: 4px; }
+
+  .key {
+    padding: 11px 2px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+
+  .key.num { font-size: 15px; }
+  .key.arith { font-size: 15px; }
+  .key.mode, .key.prog, .key.mem { font-size: 10px; }
+
+  .runbar { grid-template-columns: 1fr 1fr; gap: 4px; }
+  .runbar .key:first-child { grid-column: span 2; }
+
+  .program-list { height: 220px; font-size: 12px; }
+
+  .ins-row { grid-template-columns: 84px 1fr auto; }
+  .registers { grid-template-columns: repeat(4, 1fr); }
+  .footer { padding: 8px 12px 20px; font-size: 11px; }
+}
+
+/* крупные тач-цели на очень узких экранах */
+@media (max-width: 380px) {
+  .key { padding: 10px 1px; font-size: 11px; }
+  .key.num { font-size: 14px; }
+  .stack-val { font-size: 10px; }
+}
