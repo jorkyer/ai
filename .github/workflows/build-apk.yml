@@ -7,6 +7,7 @@ on:
       - 'android/**'
       - 'calculator/**'
       - '.github/workflows/build-apk.yml'
+      # apk/** сюда не входит, поэтому коммит с готовым APK не запускает пересборку
   workflow_dispatch:
 
 jobs:
@@ -14,10 +15,14 @@ jobs:
     name: assembleDebug
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write   # чтобы закоммитить собранный APK обратно в ветку
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # нужен полный клон для push собранного APK
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -54,10 +59,31 @@ jobs:
           du -h android/app/build/outputs/apk/debug/*.apk
           unzip -l android/app/build/outputs/apk/debug/*.apk | head -40
 
-      - name: Upload APK
+      - name: Upload APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: progcalc-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      # Артефакты Actions отдаются с *.blob.core.windows.net, поэтому дублируем
+      # APK в репозиторий: оттуда его можно достать через git / api.github.com.
+      # Push делается токеном GITHUB_TOKEN — такой push не запускает новый прогон.
+      - name: Commit APK to the branch
+        run: |
+          set -euo pipefail
+          mkdir -p apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk apk/progcalc-debug.apk
+          ls -l apk/
+          sha256sum apk/progcalc-debug.apk | tee apk/progcalc-debug.apk.sha256
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.com"
+          git add apk/progcalc-debug.apk apk/progcalc-debug.apk.sha256
+          if git diff --cached --quiet -- apk/progcalc-debug.apk; then
+            echo "APK не изменился — коммит не нужен"
+          else
+            git commit -m "chore(apk): debug-сборка ${GITHUB_SHA::7}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+            echo "APK закоммичен в ${GITHUB_REF_NAME}"
+          fi
