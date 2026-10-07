@@ -1,0 +1,11 @@
+# Артефакты сборки Android — в репозиторий не кладём
+.gradle/
+build/
+app/build/
+local.properties
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+captures/
+.cxx/

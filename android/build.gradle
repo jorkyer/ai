@@ -1,0 +1,9 @@
+// Корневой скрипт сборки. Версия Android Gradle Plugin объявляется здесь,
+// применяется — в app/build.gradle.
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

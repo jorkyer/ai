@@ -1,0 +1,69 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Веб-приложение калькулятора лежит в ../calculator и копируется в assets APK,
+// чтобы не дублировать исходники (единая точка истины для браузера и Android).
+def webAppDir = rootProject.file('../calculator')
+def generatedAssetsDir = layout.buildDirectory.dir('generated/webassets').get().asFile
+
+android {
+    namespace 'com.jorkyer.progcalc'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.jorkyer.progcalc"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            // подписываем debug-ключом, чтобы release-сборку тоже можно было поставить
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/assets', 'build/generated/webassets']
+        }
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+tasks.register('copyWebApp', Copy) {
+    group = 'build'
+    description = 'Копирует calculator/{index.html,css,js} в assets приложения'
+    from(webAppDir) {
+        include 'index.html'
+        include 'css/**'
+        include 'js/**'
+    }
+    into generatedAssetsDir
+    inputs.dir webAppDir
+    outputs.dir generatedAssetsDir
+}
+
+preBuild.dependsOn copyWebApp
+
+// страховка: assets должны быть скопированы до упаковки в APK
+tasks.configureEach { t ->
+    if (t.name.startsWith('merge') && t.name.endsWith('Assets')) {
+        t.dependsOn copyWebApp
+    }
+}
